@@ -1,9 +1,9 @@
 ﻿using System;
-using System.Security.Cryptography;
 using System.Collections.Generic;
-using System.Linq;
 using System.IO;
 using System.IO.MemoryMappedFiles;
+using System.Linq;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 
 namespace PanoramaUITools.Panorama
@@ -11,7 +11,7 @@ namespace PanoramaUITools.Panorama
     internal class DllModifier
     {
         private const string DllName = "panorama.dll";
-        private static Dictionary<string, (PanoramaDllParams parameters, string hash)> _panSigRefDict = new Dictionary<string, (PanoramaDllParams, string)>
+        private static Dictionary<string, (PanoramaDllParams parameters, string hash)> PanSigRefDict = new Dictionary<string, (PanoramaDllParams, string)>
         {
             { "FBBB14671FB2AD01C7E581E30A859D87", (new PanoramaDllParams (new byte[] { 0x68, 0xD4, 0xB1, 0x20, 0x10 }, -12, 0xEB), "4C4C01B61F786E4C56F247BE10E29369") },
         };
@@ -29,12 +29,12 @@ namespace PanoramaUITools.Panorama
 
             using (var md5 = MD5.Create())
             {
-                hash = BitConverter.ToString(md5.ComputeHash(await File.ReadAllBytesAsync(dllLocation))).Replace("-", "");
+                hash = BitConverter.ToString(md5.ComputeHash(await File.ReadAllBytesAsync(dllLocation))).Replace("-", string.Empty);
             }
 
-            if (_panSigRefDict.Values.Any(v => v.hash == hash)) { return (false, "The library has already been patched!"); }
+            if (PanSigRefDict.Values.Any(v => v.hash == hash)) { return (false, "The library has already been patched!"); }
 
-            if (!_panSigRefDict.TryGetValue(hash, out var param))
+            if (!PanSigRefDict.TryGetValue(hash, out var param))
             {
                 return (false, $"The {DllName} you want to modify is not contained in the modification database yet.\n" +
                     "Make sure the library you want to modify is an original valve library or check for a newer version of this program.");
@@ -72,7 +72,6 @@ namespace PanoramaUITools.Panorama
                     }
                 }
             }
-
         }
     }
 }

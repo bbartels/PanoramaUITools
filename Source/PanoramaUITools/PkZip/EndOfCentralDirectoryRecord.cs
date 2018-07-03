@@ -5,7 +5,7 @@ namespace PanoramaUITools.PkZip
 {
     internal class EndOfCentralDirectoryRecord
     {
-        private static readonly byte[] Signature = { 0x50, 0x4B, 0x05, 0x06 };
+        #region Constants
 
         private const byte SignatureOffset = 0x00;
         private const byte SignatureSize = 0x04;
@@ -34,6 +34,10 @@ namespace PanoramaUITools.PkZip
         private const byte CommentOffset = CommentLengthOffset + CommentLengthSize;
 
         private const byte StaticHeaderSize = CommentLengthOffset + CommentLengthSize;
+
+        #endregion Constants
+
+        private static readonly byte[] Signature = { 0x50, 0x4B, 0x05, 0x06 };
 
         public Memory<byte> EOCDHeader { get; }
 

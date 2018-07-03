@@ -6,7 +6,7 @@ using PanoramaUITools.Panorama;
 
 namespace PanoramaUITools
 {
-    class Program
+    internal class Program
     {
         private static async Task Main(string[] args)
         {

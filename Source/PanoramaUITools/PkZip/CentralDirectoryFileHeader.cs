@@ -5,9 +5,7 @@ namespace PanoramaUITools.PkZip
 {
     internal class CentralDirectoryFileHeader
     {
-        private static readonly byte[] Signature = { 0x50, 0x4B, 0x01, 0x02 };
-        private static readonly byte[] Version = { 0x14, 0x00 };
-        private static readonly byte[] VersionNeeded = { 0x0A, 0x00 };
+        #region Constants
 
         private const byte SignatureOffset = 0x00;
         private const byte SignatureSize = 0x04;
@@ -62,7 +60,13 @@ namespace PanoramaUITools.PkZip
 
         private const byte FilenameOffset = LocalHeaderOffsetOffset + LocalHeaderOffsetSize;
 
-        public const byte StaticHeaderSize = LocalHeaderOffsetOffset + LocalHeaderOffsetSize;
+        private const byte StaticHeaderSize = LocalHeaderOffsetOffset + LocalHeaderOffsetSize;
+
+        #endregion Constants
+
+        private static readonly byte[] Signature = { 0x50, 0x4B, 0x01, 0x02 };
+        private static readonly byte[] Version = { 0x14, 0x00 };
+        private static readonly byte[] VersionNeeded = { 0x0A, 0x00 };
 
         public Memory<byte> FileHeader { get; }
 

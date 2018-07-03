@@ -13,30 +13,30 @@ namespace PanoramaUITools.Panorama
         private const string PanoramaFilename = @"code.pbin";
 
         private const uint PanHeaderLength = 516;
-        private static readonly byte[] _panHeader = { 0x50, 0x41, 0x4E, 0x01 };
-        private static readonly byte[] _panTrailer = { 0x01 };
-        private static readonly string _panComment = "XZP1 0";
-        private static readonly List<string> files = new List<string>();
+        private static readonly byte[] PanHeader = { 0x50, 0x41, 0x4E, 0x01 };
+        private static readonly byte[] PanTrailer = { 0x01 };
+        private static readonly string PanComment = "XZP1 0";
+        private static readonly List<string> Files = new List<string>();
 
         public static async Task<(bool success, string msg)> GenerateArchive(string inputPath, string outputPath)
         {
             if (!Directory.Exists(inputPath)) { return (false, "Directory to be archived does not exist!"); }
 
-            var outputFilePath = outputPath + (outputPath.Last() == '\\' ? "" : "\\") + PanoramaFilename;
+            var outputFilePath = outputPath + (outputPath.Last() == '\\' ? string.Empty : "\\") + PanoramaFilename;
 
-            var archive = new PkZipArchive(_panComment);
+            var archive = new PkZipArchive(PanComment);
 
             var pathSplitIndex = inputPath.LastIndexOf(@"\") + 1;
 
             RecDirSearch(inputPath);
 
-            foreach (var file in files)
+            foreach (var file in Files)
             {
                 archive.AddFile(new PkZipFile(file.Substring(pathSplitIndex), await File.ReadAllBytesAsync(file)));
             }
 
-            var header = _panHeader.Concat(new byte[PanHeaderLength - _panHeader.Length]).ToArray();
-            archive.GenerateArchive(header, _panTrailer, outputPath + PanoramaFilename);
+            var header = PanHeader.Concat(new byte[PanHeaderLength - PanHeader.Length]).ToArray();
+            archive.GenerateArchive(header, PanTrailer, outputPath + PanoramaFilename);
             return (true, "Archive generated successfully!");
         }
 
@@ -44,7 +44,7 @@ namespace PanoramaUITools.Panorama
         {
             try
             {
-                files.AddRange(Directory.GetFiles(dir));
+                Files.AddRange(Directory.GetFiles(dir));
 
                 foreach (string directory in Directory.GetDirectories(dir))
                 {

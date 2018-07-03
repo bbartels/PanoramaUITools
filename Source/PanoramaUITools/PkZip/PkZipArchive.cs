@@ -46,9 +46,9 @@ namespace PanoramaUITools.PkZip
 
                     centralDirSize = writer.BaseStream.Length - localFilesSize - headerLength;
 
-                    var EOCDRecord = new EndOfCentralDirectoryRecord((uint)localFilesSize, (uint)centralDirSize, (ushort)_files.Count, _comment);
+                    var eocdRecord = new EndOfCentralDirectoryRecord((uint)localFilesSize, (uint)centralDirSize, (ushort)_files.Count, _comment);
 
-                    writer.Write(EOCDRecord.EOCDHeader.Span);
+                    writer.Write(eocdRecord.EOCDHeader.Span);
                     writer.Write(trailer);
                 }
             }
