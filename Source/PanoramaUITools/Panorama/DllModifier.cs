@@ -21,7 +21,7 @@ namespace PanoramaUITools.Panorama
             var dir = csDir + @"\bin\";
             var dllLocation = dir + DllName;
 
-            if (!File.Exists(dllLocation)) { return (false, $"File: ({dllLocation}) does not exist."); }
+            if (!File.Exists(dllLocation)) { return (false, $"File: ({ dllLocation }) does not exist."); }
 
             File.Copy(dllLocation, dllLocation + ".bak", true);
 
@@ -36,7 +36,7 @@ namespace PanoramaUITools.Panorama
 
             if (!PanSigRefDict.TryGetValue(hash, out var param))
             {
-                return (false, $"The {DllName} you want to modify is not contained in the modification database yet.\n" +
+                return (false, $"The { DllName } you want to modify is not contained in the modification database yet.\n" +
                     "Make sure the library you want to modify is an original valve library or check for a newer version of this program.");
             }
 
@@ -56,6 +56,7 @@ namespace PanoramaUITools.Panorama
                     {
                         if (modParams.ResourceReference[counter] == (byte)currentByte) { counter++; }
                         else { counter = 0; }
+
                         if (counter == modParams.ResourceReference.Length) { found = true; }
                     }
 
@@ -63,7 +64,7 @@ namespace PanoramaUITools.Panorama
                     {
                         accessor.Seek(modParams.ResourceReferenceOffset, SeekOrigin.Current);
                         accessor.WriteByte(modParams.SignatureCheckJumpInstr);
-                        return Task.FromResult((true, "Dll successfully patched!"));
+                        return Task.FromResult((true, "DLL successfully patched!"));
                     }
 
                     else

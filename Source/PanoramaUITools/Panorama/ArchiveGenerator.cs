@@ -11,18 +11,18 @@ namespace PanoramaUITools.Panorama
     internal static class ArchiveGenerator
     {
         private const string PanoramaFilename = @"code.pbin";
-
         private const uint PanHeaderLength = 516;
         private static readonly byte[] PanHeader = { 0x50, 0x41, 0x4E, 0x01 };
         private static readonly byte[] PanTrailer = { 0x01 };
         private static readonly string PanComment = "XZP1 0";
+
         private static readonly List<string> Files = new List<string>();
 
         public static async Task<(bool success, string msg)> GenerateArchive(string inputPath, string outputPath)
         {
             if (!Directory.Exists(inputPath)) { return (false, "Directory to be archived does not exist!"); }
 
-            var outputFilePath = outputPath + (outputPath.Last() == '\\' ? string.Empty : "\\") + PanoramaFilename;
+            var outputFilePath = $"{ outputPath }{ (outputPath.Last() == '\\' ? string.Empty : "\\") }{ PanoramaFilename }";
 
             var archive = new PkZipArchive(PanComment);
 

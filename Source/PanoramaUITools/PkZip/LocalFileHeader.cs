@@ -46,8 +46,56 @@ namespace PanoramaUITools.PkZip
 
         #endregion Constants
 
-        private static readonly byte[] Signature = { 0x50, 0x4B, 0x03, 0x04 };
-        private static readonly byte[] Version = { 0x0A, 0x00 };
+        private static readonly byte[] mSignature = { 0x50, 0x4B, 0x03, 0x04 };
+        private static readonly byte[] mVersion = { 0x0A, 0x00 };
+
+        public ReadOnlySpan<byte> Signature
+        {
+            get { return FileHeader.Span.Slice(SignatureOffset, SignatureSize); }
+            private set { value.TryCopyTo(FileHeader.Span.Slice(SignatureOffset, SignatureSize)); }
+        }
+
+        public ReadOnlySpan<byte> Version
+        {
+            get { return FileHeader.Span.Slice(VersionOffset, VersionSize); }
+            private set { value.TryCopyTo(FileHeader.Span.Slice(VersionOffset, VersionSize)); }
+        }
+
+        public uint Crc32
+        {
+            get { return BitConverter.ToUInt32(FileHeader.Span.Slice(Crc32Offset, Crc32Size)); }
+            private set { BitConverter.TryWriteBytes(FileHeader.Span.Slice(Crc32Offset, Crc32Size), value); }
+        }
+
+        public uint CompressedSize
+        {
+            get { return BitConverter.ToUInt32(FileHeader.Span.Slice(CompressedSizeOffset, CompressedSizeSize)); }
+            private set { BitConverter.TryWriteBytes(FileHeader.Span.Slice(CompressedSizeOffset, CompressedSizeSize), value); }
+        }
+
+        public uint UncompressedSize
+        {
+            get { return BitConverter.ToUInt32(FileHeader.Span.Slice(UncompressedSizeOffset, UncompressedSizeSize)); }
+            private set { BitConverter.TryWriteBytes(FileHeader.Span.Slice(UncompressedSizeOffset, UncompressedSizeSize), value); }
+        }
+        public uint FilenameLength
+        {
+            get { return (uint)Filename.Length; }
+        }
+
+        public string Filename
+        {
+            get
+            {
+                var len = (int)BitConverter.ToUInt32(FileHeader.Span.Slice(FilenameLengthOffset, FilenameLengthSize));
+                return Encoding.ASCII.GetString(FileHeader.Span.Slice(FilenameOffset, len));
+            }
+            private set
+            {
+                BitConverter.TryWriteBytes(FileHeader.Span.Slice(FilenameLengthOffset, FilenameLengthSize), value.Length);
+                Encoding.ASCII.GetBytes(value, FileHeader.Span.Slice(FilenameOffset, value.Length));
+            }
+        }
 
         public Memory<byte> FileHeader { get; set; }
 
@@ -55,17 +103,14 @@ namespace PanoramaUITools.PkZip
         {
             FileHeader = new byte[StaticHeaderSize + filename.Length];
 
-            Signature.AsSpan().TryCopyTo(FileHeader.Span.Slice(SignatureOffset, SignatureSize));
-            Version.AsSpan().TryCopyTo(FileHeader.Span.Slice(VersionOffset, VersionSize));
+            Signature = mSignature;
+            Version = mVersion;
 
-            FileHeader.Span.Slice(Crc32Offset, Crc32Size).Write(crc32);
+            Crc32 = crc32;
+            CompressedSize = fileSize;
+            UncompressedSize = fileSize;
 
-            FileHeader.Span.Slice(CompressedSizeOffset, CompressedSizeSize).Write(fileSize);
-            FileHeader.Span.Slice(UncompressedSizeOffset, UncompressedSizeSize).Write(fileSize);
-
-            FileHeader.Span.Slice(FilenameLengthOffset, FilenameLengthSize).Write((ushort)filename.Length);
-
-            Encoding.ASCII.GetBytes(filename, FileHeader.Span.Slice(FilenameOffset, filename.Length));
+            Filename = filename;
         }
     }
 }

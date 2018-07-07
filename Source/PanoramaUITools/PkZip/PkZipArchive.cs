@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace PanoramaUITools.PkZip
 {
@@ -41,14 +43,14 @@ namespace PanoramaUITools.PkZip
 
                     foreach (var file in _files)
                     {
-                        writer.Write(file.CentralDircetoryFileHeader.FileHeader.Span);
+                        writer.Write(file.CentralDircetoryFileHeader.FileHeader);
                     }
 
                     centralDirSize = writer.BaseStream.Length - localFilesSize - headerLength;
 
                     var eocdRecord = new EndOfCentralDirectoryRecord((uint)localFilesSize, (uint)centralDirSize, (ushort)_files.Count, _comment);
 
-                    writer.Write(eocdRecord.EOCDHeader.Span);
+                    writer.Write(eocdRecord.FileHeader);
                     writer.Write(trailer);
                 }
             }

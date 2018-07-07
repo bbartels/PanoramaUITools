@@ -37,26 +37,70 @@ namespace PanoramaUITools.PkZip
 
         #endregion Constants
 
-        private static readonly byte[] Signature = { 0x50, 0x4B, 0x05, 0x06 };
+        private static readonly byte[] mSignature = { 0x50, 0x4B, 0x05, 0x06 };
 
-        public Memory<byte> EOCDHeader { get; }
+        private Memory<byte> _eocdHeader { get; }
+        public ReadOnlySpan<byte> FileHeader { get { return _eocdHeader.Span; } }
+
+        public ReadOnlySpan<byte> Signature
+        {
+            get { return FileHeader.Slice(SignatureOffset, SignatureSize); }
+            private set { value.TryCopyTo(_eocdHeader.Span.Slice(SignatureOffset, SignatureSize)); }
+        }
+
+        public uint CentralDirectoryOffset
+        {
+            get { return BitConverter.ToUInt32(FileHeader.Slice(CentralDirectoryOffsetOffset, CentralDirectoryOffsetSize)); }
+            private set { BitConverter.TryWriteBytes(_eocdHeader.Span.Slice(CentralDirectoryOffsetOffset, CentralDirectoryOffsetSize), value); }
+        }
+
+        public uint CentralDirectorySize
+        {
+            get { return BitConverter.ToUInt32(FileHeader.Slice(CentralDirectorySizeOffset, CentralDirectorySizeSize)); }
+            private set { BitConverter.TryWriteBytes(_eocdHeader.Span.Slice(CentralDirectorySizeOffset, CentralDirectorySizeSize), value); }
+        }
+
+        public uint TotalEntries
+        {
+            get { return BitConverter.ToUInt32(FileHeader.Slice(TotalEntriesOffset, TotalEntriesSize)); }
+            private set { BitConverter.TryWriteBytes(_eocdHeader.Span.Slice(TotalEntriesOffset, TotalEntriesSize), value); }
+        }
+
+        public uint DiskEntries
+        {
+            get { return BitConverter.ToUInt32(FileHeader.Slice(DiskEntriesOffset, DiskEntriesSize)); }
+            private set { BitConverter.TryWriteBytes(_eocdHeader.Span.Slice(DiskEntriesOffset, DiskEntriesSize), value); }
+        }
+
+        public uint CommentLength
+        {
+            get { return (uint)Comment.Length; }
+        }
+
+        public string Comment
+        {
+            get
+            {
+                var len = (int)BitConverter.ToUInt32(FileHeader.Slice(CommentLengthOffset, CommentLengthSize));
+                return Encoding.ASCII.GetString(FileHeader.Slice(CommentOffset, len));
+            }
+            private set
+            {
+                BitConverter.TryWriteBytes(_eocdHeader.Span.Slice(CommentLengthOffset, CommentLengthSize), value.Length);
+                Encoding.ASCII.GetBytes(value, _eocdHeader.Span.Slice(CommentOffset, value.Length));
+            }
+        }
 
         public EndOfCentralDirectoryRecord(uint centralDirOffset, uint centralDirSize, ushort totalEntries, string comment)
         {
-            EOCDHeader = new byte[StaticHeaderSize + comment.Length];
+            _eocdHeader = new byte[StaticHeaderSize + comment.Length];
 
-            Signature.AsSpan().TryCopyTo(EOCDHeader.Span.Slice(SignatureOffset, SignatureSize));
-
-            EOCDHeader.Span.Slice(CentralDirectorySizeOffset, CentralDirectorySizeSize).Write(centralDirSize);
-
-            EOCDHeader.Span.Slice(CentralDirectoryOffsetOffset, CentralDirectoryOffsetSize).Write(centralDirOffset);
-
-            EOCDHeader.Span.Slice(TotalEntriesOffset, TotalEntriesSize).Write(totalEntries);
-            EOCDHeader.Span.Slice(DiskEntriesOffset, DiskEntriesSize).Write(totalEntries);
-
-            EOCDHeader.Span.Slice(CommentLengthOffset, CommentLengthSize).Write((ushort)comment.Length);
-
-            Encoding.ASCII.GetBytes(comment, EOCDHeader.Span.Slice(CommentOffset, comment.Length));
+            Signature = mSignature;
+            CentralDirectoryOffset = centralDirOffset;
+            CentralDirectorySize = centralDirSize;
+            TotalEntries = totalEntries;
+            DiskEntries = totalEntries;
+            Comment = comment;
         }
     }
 }
