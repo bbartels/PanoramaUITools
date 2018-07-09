@@ -1,8 +1,7 @@
 {
   "profiles": {
     "ArchiveGenerator": {
-      "commandName": "Project",
-      "commandLineArgs": ""
+      "commandName": "Project"
     }
   }
 }

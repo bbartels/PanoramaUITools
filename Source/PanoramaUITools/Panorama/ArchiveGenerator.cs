@@ -8,7 +8,7 @@ using PanoramaUITools.PkZip;
 
 namespace PanoramaUITools.Panorama
 {
-    internal static class ArchiveGenerator
+    public static class ArchiveGenerator
     {
         private const string PanoramaFilename = @"code.pbin";
         private const uint PanHeaderLength = 516;
@@ -22,7 +22,7 @@ namespace PanoramaUITools.Panorama
         {
             if (!Directory.Exists(inputPath)) { return (false, "Directory to be archived does not exist!"); }
 
-            var outputFilePath = $"{ outputPath }{ (outputPath.Last() == '\\' ? string.Empty : "\\") }{ PanoramaFilename }";
+            var outputFilePath = Path.Combine(outputPath, PanoramaFilename);
 
             var archive = new PkZipArchive(PanComment);
 
@@ -36,7 +36,7 @@ namespace PanoramaUITools.Panorama
             }
 
             var header = PanHeader.Concat(new byte[PanHeaderLength - PanHeader.Length]).ToArray();
-            archive.GenerateArchive(header, PanTrailer, outputPath + PanoramaFilename);
+            archive.GenerateArchive(header, PanTrailer, outputFilePath);
             return (true, "Archive generated successfully!");
         }
 

@@ -18,4 +18,14 @@ namespace PanoramaUITools
         [Option('d', "Specify CS:GO Directory", Required = true)]
         public string CsgoDirectory { get; set; }
     }
+
+    [Verb("extract", HelpText = "Extracts Panorama Archive")]
+    internal class ExtractArchiveOptions
+    {
+        [Option('i', "Input path for the input archive", Required = true)]
+        public string DirectoryPath { get; set; }
+
+        [Option('o', "Output path for the extracted archive")]
+        public string OutputPath { get; set; }
+    }
 }

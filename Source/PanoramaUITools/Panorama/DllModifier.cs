@@ -8,12 +8,12 @@ using System.Threading.Tasks;
 
 namespace PanoramaUITools.Panorama
 {
-    internal class DllModifier
+    public class DllModifier
     {
         private const string DllName = "panorama.dll";
-        private static Dictionary<string, (PanoramaDllParams parameters, string hash)> PanSigRefDict = new Dictionary<string, (PanoramaDllParams, string)>
+        private static readonly Dictionary<string, (PanoramaDllParams parameters, string hash)> PanSigRefDict = new Dictionary<string, (PanoramaDllParams, string)>
         {
-            { "FBBB14671FB2AD01C7E581E30A859D87", (new PanoramaDllParams (new byte[] { 0x68, 0xD4, 0xB1, 0x20, 0x10 }, -12, 0xEB), "4C4C01B61F786E4C56F247BE10E29369") },
+            { "FBBB14671FB2AD01C7E581E30A859D87", (new PanoramaDllParams (new byte[] { 0x68, 0xD4, 0xB1, 0x20, 0x10 }, -11, 0xEB), "4C4C01B61F786E4C56F247BE10E29369") },
         };
 
         public static async Task<(bool success, string msg)> ModifyDll(string csDir)
@@ -49,10 +49,11 @@ namespace PanoramaUITools.Panorama
             {
                 using (var accessor = file.CreateViewStream())
                 {
-                    bool found = false;
-                    int counter = 0;
-                    int currentByte = 0;
-                    while ((currentByte = accessor.ReadByte()) != -1 && !found)
+                    var found = false;
+                    var counter = 0;
+                    int currentByte;
+
+                    while (!found && (currentByte = accessor.ReadByte()) != -1)
                     {
                         if (modParams.ResourceReference[counter] == (byte)currentByte) { counter++; }
                         else { counter = 0; }
@@ -60,17 +61,12 @@ namespace PanoramaUITools.Panorama
                         if (counter == modParams.ResourceReference.Length) { found = true; }
                     }
 
-                    if (found)
-                    {
-                        accessor.Seek(modParams.ResourceReferenceOffset, SeekOrigin.Current);
-                        accessor.WriteByte(modParams.SignatureCheckJumpInstr);
-                        return Task.FromResult((true, "DLL successfully patched!"));
-                    }
+                    if (!found) { return Task.FromResult((false, "Error while patching DLL!")); }
 
-                    else
-                    {
-                        return Task.FromResult((false, "Error while patching DLL!"));
-                    }
+                    accessor.Seek(modParams.ResourceReferenceOffset, SeekOrigin.Current);
+                    accessor.WriteByte(modParams.SignatureCheckJumpInstr);
+
+                    return Task.FromResult((true, "DLL successfully patched!"));
                 }
             }
         }

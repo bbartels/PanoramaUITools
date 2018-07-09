@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -7,8 +6,8 @@ namespace PanoramaUITools.PkZip
 {
     internal class PkZipArchive
     {
-        private List<PkZipFile> _files = new List<PkZipFile>();
-        private string _comment { get; set; }
+        private readonly List<PkZipFile> _files = new List<PkZipFile>();
+        private readonly string _comment;
 
         public PkZipArchive(string comment)
         {
@@ -20,11 +19,21 @@ namespace PanoramaUITools.PkZip
             _files.Add(file);
         }
 
+        public static async Task ExtractFromArchive(string inputPath, string outputPath)
+        {
+            using (var fileStream = new FileStream(inputPath, FileMode.Open))
+            {
+                using (var reader = new BinaryReader(fileStream))
+                {
+                    var test = new CentralDirectory(reader.BaseStream);
+                    await test.ExtractAll(Path.Combine(outputPath, Path.GetFileNameWithoutExtension(inputPath)), new System.Threading.CancellationToken());
+                }
+            }
+        }
+
         public void GenerateArchive(byte[] header, byte[] trailer, string outputPath)
         {
             var headerLength = header.Length;
-            long localFilesSize = 0;
-            long centralDirSize = 0;
 
             using (var memory = new FileStream(outputPath, FileMode.Create))
             {
@@ -35,18 +44,18 @@ namespace PanoramaUITools.PkZip
                     foreach (var file in _files)
                     {
                         file.LocalHeaderOffset = (uint)(writer.BaseStream.Length - headerLength);
-                        writer.Write(file.LocalFileHeader.FileHeader.Span);
+                        writer.Write(file.LocalFileHeader.FileHeader);
                         writer.Write(file.File.Span);
                     }
 
-                    localFilesSize = writer.BaseStream.Length - headerLength;
+                    var localFilesSize = writer.BaseStream.Length - headerLength;
 
                     foreach (var file in _files)
                     {
                         writer.Write(file.CentralDircetoryFileHeader.FileHeader);
                     }
 
-                    centralDirSize = writer.BaseStream.Length - localFilesSize - headerLength;
+                    var centralDirSize = writer.BaseStream.Length - localFilesSize - headerLength;
 
                     var eocdRecord = new EndOfCentralDirectoryRecord((uint)localFilesSize, (uint)centralDirSize, (ushort)_files.Count, _comment);
 

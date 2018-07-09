@@ -64,60 +64,58 @@ namespace PanoramaUITools.PkZip
 
         #endregion Constants
 
-        private static readonly byte[] mSignature = { 0x50, 0x4B, 0x01, 0x02 };
-        private static readonly byte[] mVersion = { 0x14, 0x00 };
-        private static readonly byte[] mVersionNeeded = { 0x0A, 0x00 };
+        private static readonly byte[] EocdSignature = { 0x50, 0x4B, 0x01, 0x02 };
+        private static readonly byte[] EocdVersion = { 0x14, 0x00 };
+        private static readonly byte[] EocdVersionNeeded = { 0x0A, 0x00 };
 
-        private Memory<byte> _fileHeader;
-        public ReadOnlySpan<byte> FileHeader { get { return _fileHeader.Span; } }
+        public static ReadOnlySpan<byte> HeaderSignature => new ReadOnlySpan<byte>(EocdSignature);
+
+        private readonly Memory<byte> _fileHeader;
+        public ReadOnlySpan<byte> FileHeader => _fileHeader.Span;
 
         public ReadOnlySpan<byte> Signature
         {
-            get { return FileHeader.Slice(SignatureOffset, SignatureSize); }
-            private set { value.TryCopyTo(_fileHeader.Span.Slice(SignatureOffset, SignatureSize)); }
+            get => FileHeader.Slice(SignatureOffset, SignatureSize);
+            private set => value.CopyTo(_fileHeader.Span.Slice(SignatureOffset, SignatureSize));
         }
 
         public ReadOnlySpan<byte> Version
         {
-            get { return FileHeader.Slice(VersionOffset, VersionSize); }
-            private set { value.TryCopyTo(_fileHeader.Span.Slice(VersionOffset, VersionSize)); }
+            get => FileHeader.Slice(VersionOffset, VersionSize);
+            private set => value.CopyTo(_fileHeader.Span.Slice(VersionOffset, VersionSize));
         }
 
         public ReadOnlySpan<byte> VersionNeeded
         {
-            get { return FileHeader.Slice(VersionNeededOffset, VersionNeededSize); }
-            private set { value.TryCopyTo(_fileHeader.Span.Slice(VersionNeededOffset, VersionNeededSize)); }
+            get => FileHeader.Slice(VersionNeededOffset, VersionNeededSize);
+            private set => value.CopyTo(_fileHeader.Span.Slice(VersionNeededOffset, VersionNeededSize));
         }
 
         public uint Crc32
         {
-            get { return BitConverter.ToUInt32(FileHeader.Slice(Crc32Offset, Crc32Size)); }
-            private set { BitConverter.TryWriteBytes(_fileHeader.Span.Slice(Crc32Offset, Crc32Size), value); }
+            get => BitConverter.ToUInt32(FileHeader.Slice(Crc32Offset, Crc32Size));
+            private set => BitConverter.TryWriteBytes(_fileHeader.Span.Slice(Crc32Offset, Crc32Size), value);
         }
 
         public uint CompressedSize
         {
-            get { return BitConverter.ToUInt32(FileHeader.Slice(CompressedSizeOffset, CompressedSizeSize)); }
-            private set { BitConverter.TryWriteBytes(_fileHeader.Span.Slice(CompressedSizeOffset, CompressedSizeSize), value); }
+            get => BitConverter.ToUInt32(FileHeader.Slice(CompressedSizeOffset, CompressedSizeSize));
+            private set => BitConverter.TryWriteBytes(_fileHeader.Span.Slice(CompressedSizeOffset, CompressedSizeSize), value);
         }
 
         public uint UncompressedSize
         {
-            get { return BitConverter.ToUInt32(FileHeader.Slice(UncompressedSizeOffset, UncompressedSizeSize)); }
-            private set { BitConverter.TryWriteBytes(_fileHeader.Span.Slice(UncompressedSizeOffset, UncompressedSizeSize), value); }
+            get => BitConverter.ToUInt32(FileHeader.Slice(UncompressedSizeOffset, UncompressedSizeSize));
+            private set => BitConverter.TryWriteBytes(_fileHeader.Span.Slice(UncompressedSizeOffset, UncompressedSizeSize), value);
         }
 
-        public uint FilenameLength
-        {
-            get { return BitConverter.ToUInt32(FileHeader.Slice(FilenameLengthOffset, FilenameLengthSize)); }
-            private set { BitConverter.TryWriteBytes(_fileHeader.Span.Slice(FilenameLengthOffset, FilenameLengthSize), value); }
-        }
+        public ushort FilenameLength => (ushort)Filename.Length;
 
         public string Filename
         {
             get
             {
-                var len = (int)BitConverter.ToUInt32(FileHeader.Slice(FilenameLengthOffset, FilenameLengthSize));
+                var len = (int)BitConverter.ToUInt16(FileHeader.Slice(FilenameLengthOffset, FilenameLengthSize));
                 return Encoding.ASCII.GetString(FileHeader.Slice(FilenameOffset, len));
             }
             private set
@@ -129,26 +127,35 @@ namespace PanoramaUITools.PkZip
 
         public uint LocalHeaderOffset
         {
-            get { return BitConverter.ToUInt32(_fileHeader.Span.Slice(LocalHeaderOffsetOffset, LocalHeaderOffsetSize)); }
-            private set { BitConverter.TryWriteBytes(_fileHeader.Span.Slice(LocalHeaderOffsetOffset, LocalHeaderOffsetSize), value); }
+            get => BitConverter.ToUInt32(_fileHeader.Span.Slice(LocalHeaderOffsetOffset, LocalHeaderOffsetSize));
+            private set => BitConverter.TryWriteBytes(_fileHeader.Span.Slice(LocalHeaderOffsetOffset, LocalHeaderOffsetSize), value);
         }
 
         public CentralDirectoryFileHeader(string filename, uint fileSize, uint crc32, uint localHeaderOffset)
         {
             _fileHeader = new byte[StaticHeaderSize + filename.Length];
 
-            Signature = mSignature;
-            Version = mVersion;
-            VersionNeeded = mVersion;
+            Signature = EocdSignature;
+            Version = EocdVersion;
+            VersionNeeded = EocdVersion;
 
             Crc32 = crc32;
             CompressedSize = fileSize;
             UncompressedSize = fileSize;
 
-            FilenameLength = (ushort)filename.Length;
             Filename = filename;
 
             LocalHeaderOffset = localHeaderOffset;
+        }
+
+        public CentralDirectoryFileHeader(Span<byte> data)
+        {
+            if (!data.StartsWith(HeaderSignature)) { throw new ArgumentException("Invalid Central Directory FileHeader!"); }
+
+            var headerLength = StaticHeaderSize + BitConverter.ToUInt16(data.Slice(FilenameLengthOffset, FilenameLengthSize));
+            _fileHeader = new byte[headerLength];
+
+            data.Slice(0, headerLength).CopyTo(_fileHeader.Span);
         }
     }
 }

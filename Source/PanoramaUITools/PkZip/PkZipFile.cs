@@ -8,33 +8,36 @@ namespace PanoramaUITools.PkZip
         public LocalFileHeader LocalFileHeader { get; }
         public uint LocalHeaderOffset { get; set; }
 
-        public CentralDirectoryFileHeader CentralDircetoryFileHeader
-        {
-            get
-            {
-                return new CentralDirectoryFileHeader(Filename, (uint)File.Length, Crc32, LocalHeaderOffset);
-            }
-        }
+        public CentralDirectoryFileHeader CentralDircetoryFileHeader => new CentralDirectoryFileHeader(Filename, (uint)File.Length, Crc32, LocalHeaderOffset);
 
-        public string Filename { get; private set; }
-        public Memory<byte> File { get; }
+        private readonly Memory<byte> _file;
 
-        private uint? crc32 = null;
+        public ReadOnlyMemory<byte> File => _file;
+        public string Filename => LocalFileHeader.Filename;
+
+        private uint? _crc32;
         public uint Crc32
         {
             get
             {
-                if (crc32 == null) { crc32 = Crc32Algorithm.Compute(File.ToArray()); }
-                return (uint)crc32;
+                if (_crc32 == null) { _crc32 = Crc32Algorithm.Compute(File.ToArray()); }
+                return (uint)_crc32;
             }
         }
 
         public PkZipFile(string filename, byte[] file)
         {
-            File = file;
-            Filename = filename;
+            _file = file;
 
-            LocalFileHeader = new LocalFileHeader(Filename, (uint)File.Length, Crc32);
+            LocalFileHeader = new LocalFileHeader(filename, (uint)File.Length, Crc32);
+        }
+
+        internal PkZipFile(LocalFileHeader header, uint headerOffset, Memory<byte> file)
+        {
+            _file = file;
+
+            LocalFileHeader = header;
+            LocalHeaderOffset = headerOffset;
         }
     }
 }
