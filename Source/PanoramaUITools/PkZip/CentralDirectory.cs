@@ -56,10 +56,7 @@ namespace PanoramaUITools.PkZip
                 }
             }
 
-            else
-            {
-                throw new ArgumentException("End of Directory Header could not be found!");
-            }
+            else { throw new ArgumentException("End of Directory Header could not be found!"); }
         }
 
         public async Task ExtractAll(string path, CancellationToken token)

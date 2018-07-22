@@ -118,6 +118,7 @@ namespace PanoramaUITools.PkZip
                 var len = (int)BitConverter.ToUInt16(FileHeader.Slice(FilenameLengthOffset, FilenameLengthSize));
                 return Encoding.ASCII.GetString(FileHeader.Slice(FilenameOffset, len));
             }
+
             private set
             {
                 BitConverter.TryWriteBytes(_fileHeader.Span.Slice(FilenameLengthOffset, FilenameLengthSize), value.Length);

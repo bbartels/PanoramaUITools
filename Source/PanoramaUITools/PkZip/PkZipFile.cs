@@ -10,9 +10,7 @@ namespace PanoramaUITools.PkZip
 
         public CentralDirectoryFileHeader CentralDircetoryFileHeader => new CentralDirectoryFileHeader(Filename, (uint)File.Length, Crc32, LocalHeaderOffset);
 
-        private readonly Memory<byte> _file;
-
-        public ReadOnlyMemory<byte> File => _file;
+        public ReadOnlyMemory<byte> File { get; private set; }
         public string Filename => LocalFileHeader.Filename;
 
         private uint? _crc32;
@@ -27,14 +25,14 @@ namespace PanoramaUITools.PkZip
 
         public PkZipFile(string filename, byte[] file)
         {
-            _file = file;
+            File = file;
 
             LocalFileHeader = new LocalFileHeader(filename, (uint)File.Length, Crc32);
         }
 
         internal PkZipFile(LocalFileHeader header, uint headerOffset, Memory<byte> file)
         {
-            _file = file;
+            File = file;
 
             LocalFileHeader = header;
             LocalHeaderOffset = headerOffset;

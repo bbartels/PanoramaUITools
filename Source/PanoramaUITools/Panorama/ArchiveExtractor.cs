@@ -10,10 +10,9 @@ namespace PanoramaUITools.Panorama
         public static async Task<(bool success, string msg)> ExtractArchive(string inputPath, string outputPath)
         {
             if (!File.Exists(inputPath)) { return (false, "File could not be found!"); }
+            if (Directory.Exists(outputPath)) { return (false, "Output directory exists already, extraction terminated!"); }
 
-            await PkZipArchive.ExtractFromArchive(inputPath, outputPath);
-
-            return (false, "test");
+            return await PkZipArchive.ExtractFromArchive(inputPath, outputPath);
         }
     }
 }

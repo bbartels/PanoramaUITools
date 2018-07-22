@@ -37,6 +37,7 @@ namespace PanoramaUITools.Panorama
 
             var header = PanHeader.Concat(new byte[PanHeaderLength - PanHeader.Length]).ToArray();
             archive.GenerateArchive(header, PanTrailer, outputFilePath);
+
             return (true, "Archive generated successfully!");
         }
 

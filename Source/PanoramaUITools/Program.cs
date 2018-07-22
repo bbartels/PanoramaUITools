@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using System.Configuration;
 using CommandLine;
 
 using PanoramaUITools.Panorama;
@@ -10,6 +11,8 @@ namespace PanoramaUITools
     {
         private static async Task Main(string[] args)
         {
+            var config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None).AppSettings.Settings;
+
             await Parser.Default.ParseArguments<GenerateArchiveOptions, ExtractArchiveOptions, ModifyDllOptions>(args)
                 .MapResult(
                 (GenerateArchiveOptions opts) => GenerateArchive(opts),
@@ -18,21 +21,31 @@ namespace PanoramaUITools
 
             async Task ModifyDll(ModifyDllOptions opts)
             {
-                var (success, msg) = await DllModifier.ModifyDll(opts.CsgoDirectory);
-                if (!success) { Console.WriteLine(msg); }
+                var csDir = opts.CsgoDirectory ?? config["csgoDirectory"].Value;
+
+                WriteResult(await DllModifier.ModifyDll(csDir));
             }
 
             async Task GenerateArchive(GenerateArchiveOptions opts)
             {
-                var (success, msg) = await ArchiveGenerator.GenerateArchive(opts.DirectoryPath, opts.OutputPath);
-                if (!success) { Console.WriteLine(msg); }
+                var inputDir = opts.DirectoryPath ?? config["archiveDirectory"].Value;
+                var outputDir = opts.OutputPath ?? config["outputDirectory"].Value;
+
+                WriteResult(await ArchiveGenerator.GenerateArchive(opts.DirectoryPath, opts.OutputPath));
             }
 
             async Task ExtractArchive(ExtractArchiveOptions opts)
             {
-                var (success, msg) = await ArchiveExtractor.ExtractArchive(opts.DirectoryPath, opts.OutputPath);
-                if (!success) { Console.WriteLine(msg); }
+                var csDir = opts.DirectoryPath ?? config["csgoDirectory"].Value;
+                var outputDir = opts.OutputPath ?? config["archiveDirectory"].Value;
+
+                WriteResult(await ArchiveExtractor.ExtractArchive(csDir, outputDir));
             }
+        }
+
+        private static void WriteResult((bool success, string msg) result)
+        {
+            Console.WriteLine($"{ (result.success ? "Success": "Error") }: { result.msg }");
         }
     }
 }

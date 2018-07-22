@@ -10,7 +10,6 @@ namespace PanoramaUITools.Panorama
 {
     public class DllModifier
     {
-        private const string DllName = "panorama.dll";
         private static readonly Dictionary<string, (PanoramaDllParams parameters, string hash)> PanSigRefDict = new Dictionary<string, (PanoramaDllParams, string)>
         {
             { "FBBB14671FB2AD01C7E581E30A859D87", (new PanoramaDllParams (new byte[] { 0x68, 0xD4, 0xB1, 0x20, 0x10 }, -11, 0xEB), "4C4C01B61F786E4C56F247BE10E29369") },
@@ -18,12 +17,12 @@ namespace PanoramaUITools.Panorama
 
         public static async Task<(bool success, string msg)> ModifyDll(string csDir)
         {
-            var dir = csDir + @"\bin\";
-            var dllLocation = dir + DllName;
+            var dir = PanoramaInfo.GetPanoramaBinDir(csDir);
+            var dllLocation = PanoramaInfo.GetPanoramaBinLocation(csDir);
 
             if (!File.Exists(dllLocation)) { return (false, $"File: ({ dllLocation }) does not exist."); }
 
-            File.Copy(dllLocation, dllLocation + ".bak", true);
+            File.Copy(dllLocation, PanoramaInfo.GetPanoramaBinBackupLocation(csDir), true);
 
             string hash;
 
@@ -36,7 +35,7 @@ namespace PanoramaUITools.Panorama
 
             if (!PanSigRefDict.TryGetValue(hash, out var param))
             {
-                return (false, $"The { DllName } you want to modify is not contained in the modification database yet.\n" +
+                return (false, $"The panorama binary you want to modify is not contained in the modification database yet.\n" +
                     "Make sure the library you want to modify is an original valve library or check for a newer version of this program.");
             }
 

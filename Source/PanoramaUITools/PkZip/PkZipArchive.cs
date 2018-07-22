@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -19,15 +20,24 @@ namespace PanoramaUITools.PkZip
             _files.Add(file);
         }
 
-        public static async Task ExtractFromArchive(string inputPath, string outputPath)
+        public static async Task<(bool success, string msg)> ExtractFromArchive(string inputPath, string outputPath)
         {
-            using (var fileStream = new FileStream(inputPath, FileMode.Open))
+            try
             {
-                using (var reader = new BinaryReader(fileStream))
+                using (var fileStream = new FileStream(inputPath, FileMode.Open))
                 {
-                    var test = new CentralDirectory(reader.BaseStream);
-                    await test.ExtractAll(Path.Combine(outputPath, Path.GetFileNameWithoutExtension(inputPath)), new System.Threading.CancellationToken());
+                    using (var reader = new BinaryReader(fileStream))
+                    {
+                        var test = new CentralDirectory(reader.BaseStream);
+                        await test.ExtractAll(Path.Combine(outputPath, Path.GetFileNameWithoutExtension(inputPath)), new System.Threading.CancellationToken());
+                        return (true, "Extraction successful!");
+                    }
                 }
+            }
+
+            catch (ArgumentException e)
+            {
+                return (false, e.Message);
             }
         }
 
